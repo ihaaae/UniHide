@@ -41,6 +41,11 @@ def training_step(carrier: torch.Tensor, carrier_reconst: torch.Tensor, msg: tor
 
     return loss, losses_log
 
+def save_models(ckpt_dir, encoder, decoder, suffix=''):
+    logger.info(f"saving model to: {ckpt_dir}\n==> suffix: {suffix}")
+    makedirs(join(ckpt_dir, suffix), exist_ok=True)
+    torch.save(encoder.state_dict(), join(ckpt_dir, suffix, "encoder.ckpt"))
+    torch.save(decoder.state_dict(), join(ckpt_dir, suffix, "decoder.ckpt"))
 
 class Solver(object):
     def __init__(self, config):
@@ -91,15 +96,12 @@ class Solver(object):
         makedirs(self.samples_dir, exist_ok=True)
         logger.info("created dirs")
 
-    def save_models(self, encoder_first, encoder_second, decoder, suffix=''):
-        logger.info(f"saving model to: {self.ckpt_dir}\n==> suffix: {suffix}")
-        makedirs(join(self.ckpt_dir, suffix), exist_ok=True)
-        torch.save(encoder_first.state_dict(), join(self.ckpt_dir, suffix, "encoder_first.ckpt"))
-        torch.save(encoder_second.state_dict(), join(self.ckpt_dir, suffix, "encoder_second.ckpt"))
-        torch.save(decoder.state_dict(), join(self.ckpt_dir, suffix, f"decoder.ckpt"))
-
-    def save_models_new(self, encoder, decoder, suffix=''):
-        pass
+    # def save_models(self, encoder_first, encoder_second, decoder, suffix=''):
+    #     logger.info(f"saving model to: {self.ckpt_dir}\n==> suffix: {suffix}")
+    #     makedirs(join(self.ckpt_dir, suffix), exist_ok=True)
+    #     torch.save(encoder_first.state_dict(), join(self.ckpt_dir, suffix, "encoder_first.ckpt"))
+    #     torch.save(encoder_second.state_dict(), join(self.ckpt_dir, suffix, "encoder_second.ckpt"))
+    #     torch.save(decoder.state_dict(), join(self.ckpt_dir, suffix, f"decoder.ckpt"))
 
     def train(self, train_dataloader, val_dataloader, encoder, decoder, optimizer, scheduler):
         # start of training loop
@@ -153,7 +155,8 @@ class Solver(object):
             self.log_losses(epoch_loss, iteration=epoch)
 
             # save model every epoch
-            self.save_models_new(encoder, decoder, suffix=str(epoch+1) + "_epoch")
+            save_models(self.ckpt_dir, encoder, decoder, suffix=str(epoch+1) + "_epoch")
+            # self.save_models_new(encoder, decoder, suffix=str(epoch+1) + "_epoch")
 
             # run validation and log losses
             self.log_losses(self.test(val_dataloader, encoder, decoder, data='val'), iteration=epoch)
@@ -175,7 +178,7 @@ class Solver(object):
             logger.info(f"phase: {'test' if data == 'test' else 'validation'}")
             # start of training loop
             logger.info(f"start {'testing' if data == 'test' else 'validation'}...")
-            for carrier, carrier_phase, msg, _ in tqdm(test_dataloader):
+            for carrier, _, msg, _ in tqdm(test_dataloader):
                 assert carrier.shape == msg.shape == spect_audio_shape
 
                 # feedforward and incur loss

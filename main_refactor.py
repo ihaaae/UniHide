@@ -98,11 +98,16 @@ def get_dataloaders(hparams):
 
     return train_dataloader, val_dataloader, test_dataloader
 
-def load_models(encoder_first, encoder_second, decoder, ckpt_dir):
-    encoder_first.load_state_dict(torch.load(join(ckpt_dir, "encoder_first.ckpt")))
-    encoder_second.load_state_dict(torch.load(join(ckpt_dir, "encoder_second.ckpt")))
+# def load_models(encoder_first, encoder_second, decoder, ckpt_dir):
+#     encoder_first.load_state_dict(torch.load(join(ckpt_dir, "encoder_first.ckpt")))
+#     encoder_second.load_state_dict(torch.load(join(ckpt_dir, "encoder_second.ckpt")))
+#     decoder.load_state_dict(torch.load(join(ckpt_dir, "decoder.ckpt")))
+#     logger.info("loaded models")
+
+def load_models(encoder, decoder, ckpt_dir):
+    encoder.load_state_dict(torch.load(join(ckpt_dir, "encoder.ckpt")))
     decoder.load_state_dict(torch.load(join(ckpt_dir, "decoder.ckpt")))
-    logger.info("loaded models")
+    logger.info("loader models")
 
 def get_models(hparams):
         dec_m_conv_dim  = 1
@@ -117,11 +122,8 @@ def get_models(hparams):
         optimizer = torch.optim.Adam(params, lr=hparams.lr)
         scheduler = StepLR(optimizer, step_size=20, gamma=0.5)
 
-        def load_models_new(path, encoder, decoder):
-            pass
-
         if hparams.load_ckpt:
-            load_models_new(hparams.load_ckpt, encoder, decoder)
+            load_models(encoder, decoder, hparams.load_ckpt)
 
         logger.debug(encoder)
         logger.debug(decoder)
@@ -139,7 +141,6 @@ def run(hparams):
 
     if hparams.mode == 'train':
         solver.train(train_dataloader, val_dataloader, encoder, decoder, optimizer, scheduler)
-        # solver.test(test_dataloader, encoder, decoder)
     elif hparams.mode == 'test':
         solver.test(test_dataloader, encoder, decoder)
     elif hparams.mode == 'sample':
@@ -156,9 +157,9 @@ def main():
     parser.add_argument('--train_path', required=True, type=str, help='path to training set. should be a folder containing .wav files for training')
     parser.add_argument('--val_path', required=True, type=str, help='')
     parser.add_argument('--test_path', required=True, type=str, help='')
-    parser.add_argument('--batch_size', type=int, default=64, help='batch size')
-    parser.add_argument('--n_pairs', type=int, default=50000, help='number of training examples generated from wav files')
-    parser.add_argument('--dataset', type=str, default='timit', help='select dataset', choices=['timit', 'yoho', 'mini'])
+    parser.add_argument('--batch_size', type=int, default=32, help='batch size')
+    parser.add_argument('--n_pairs', type=int, default=32, help='number of training examples generated from wav files')
+    parser.add_argument('--dataset', type=str, default='timit', help='select dataset', choices=['timit', 'mini'])
 
     parser.add_argument('--block_type', type=str, default='normal', choices=['normal', 'skip', 'bn', 'in', 'relu'], help='type of block for encoder/decoder')
     parser.add_argument('--enc_n_layers', default=3, type=int, help='number of layers in encoder')
