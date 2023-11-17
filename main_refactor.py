@@ -57,52 +57,49 @@ class FullEncoder(nn.Module):
         return carrier_reconst
     
 
-def get_dataloaders(hparams):
-    trim_start = {'timit': int(0.6*16000),
-                  'mini': int(0.6*16000)}[hparams.dataset]
-    
-    if hparams.mode == 'sample':
-        trim_start = 0
-
-    num_samples = int({'timit': AUDIO_LEN * 16000,
-                       'mini':  AUDIO_LEN * 16000}[hparams.dataset])
-
-    train_dataset = TimitDataset(hparams.train_path,
-                                 n_pairs     = hparams.n_pairs,
-                                 trim_start  = trim_start,
-                                 num_samples = num_samples)
+def train_dataloader(train_path, batch_size, num_workers):
+    trim_start  = int(0.6*16000)
+    num_samples = AUDIO_LEN * 16000
+    train_dataset = TimitDataset(train_path,
+                                n_pairs     = 4608,
+                                trim_start  = trim_start,
+                                num_samples = num_samples)
     train_dataloader = DataLoader(train_dataset,
-                                  batch_size  = hparams.batch_size,
+                                  batch_size  = batch_size,
                                   shuffle     = True,
-                                  num_workers = hparams.num_workers)
+                                  num_workers = num_workers)
+    
+    return train_dataloader
 
-    val_dataset = TimitDataset(hparams.val_path,
+def val_dataloader(val_path, batch_size, num_workers):
+    trim_start  = int(0.6*16000)
+    num_samples = AUDIO_LEN * 16000
+    val_dataset = TimitDataset(val_path,
                                n_pairs     = 832,
                                trim_start  = trim_start,
                                num_samples = num_samples,
                                test        = True)
     val_dataloader = DataLoader(val_dataset,
-                                batch_size  = hparams.batch_size,
+                                batch_size  = batch_size,
                                 shuffle     = False,
-                                num_workers = hparams.num_workers)
+                                num_workers = num_workers)
+    
+    return val_dataloader
 
-    test_dataset = TimitDataset(hparams.test_path,
+def test_dataloader(test_path, batch_size):
+    trim_start  = int(0.6*16000)
+    num_samples = AUDIO_LEN * 16000
+    test_dataset = TimitDataset(test_path,
                                 n_pairs     = 832,
                                 trim_start  = trim_start,
                                 num_samples = num_samples,
                                 test        = True)
     test_dataloader = DataLoader(test_dataset,
-                                 batch_size  = hparams.batch_size,
+                                 batch_size  = batch_size,
                                  shuffle     = False,
                                  num_workers = 0)
-
-    return train_dataloader, val_dataloader, test_dataloader
-
-# def load_models(encoder_first, encoder_second, decoder, ckpt_dir):
-#     encoder_first.load_state_dict(torch.load(join(ckpt_dir, "encoder_first.ckpt")))
-#     encoder_second.load_state_dict(torch.load(join(ckpt_dir, "encoder_second.ckpt")))
-#     decoder.load_state_dict(torch.load(join(ckpt_dir, "decoder.ckpt")))
-#     logger.info("loaded models")
+    
+    return test_dataloader
 
 def load_models(encoder, decoder, ckpt_dir):
     encoder.load_state_dict(torch.load(join(ckpt_dir, "encoder.ckpt")))
@@ -134,15 +131,21 @@ def run(hparams):
     torch.set_num_threads(1000)
     solver = Solver(hparams)
     
-    train_dataloader, val_dataloader, test_dataloader = get_dataloaders(hparams)
     encoder, decoder, optimizer, scheduler = get_models(hparams)
 
-    logger.info(f"loaded train ({len(train_dataloader)}), val ({len(val_dataloader)}), test ({len(test_dataloader)})")
-
     if hparams.mode == 'train':
-        solver.train(train_dataloader, val_dataloader, encoder, decoder, optimizer, scheduler)
+        train_loader = train_dataloader(hparams.train_path, hparams.batch_size, hparams.num_workers)
+        val_loader   = val_dataloader(hparams.val_path, hparams.batch_size, hparams.num_workers)
+
+        logger.info(f"loaded train ({len(train_loader)}), val ({len(val_loader)})")
+
+        solver.train(train_loader, val_loader, encoder, decoder, optimizer, scheduler)
     elif hparams.mode == 'test':
-        solver.test(test_dataloader, encoder, decoder)
+        test_loader = test_dataloader(hparams.test_path, hparams.batch_size)
+
+        logger.info(f"loaded test ({len(test_loader)})")
+
+        solver.test(test_loader, encoder, decoder)
     elif hparams.mode == 'sample':
         pass
         # solver.eval_mode()

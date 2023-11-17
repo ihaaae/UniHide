@@ -12,7 +12,7 @@ from stft.stft import STFT
 
 def spect_loader(path:str, trim_start:int, return_phase=False, num_samples=16000, crop=True) -> Union[torch.Tensor, 
                                                                                                       Tuple[torch.Tensor, torch.Tensor]]:
-    y, sr = soundfile.read(path)
+    y, _ = soundfile.read(path)
 
     if crop:
         y = y[trim_start: trim_start + num_samples]  # trim 'trim_start' from start and crop 1 sec
@@ -30,8 +30,17 @@ def spect_loader(path:str, trim_start:int, return_phase=False, num_samples=16000
     
     return spect
 
+def make_pairs_dataset(path: str, n_pairs: int) -> List[Tuple[str, str]]:
+    pairs = []
+    wav_files = list(fileutils.iter_find_files(path, "*.wav"))
 
-class BaseDataset(data.Dataset):
+    for _ in range(n_pairs):
+        sampled_files = random.sample(wav_files, 2)
+        carrier_file, hidden_message_file = sampled_files
+        pairs.append((carrier_file, hidden_message_file))
+    return pairs
+
+class TimitDataset(data.Dataset):
     def __init__(self, root,
                        n_pairs=100000,
                        transform=None,
@@ -39,7 +48,7 @@ class BaseDataset(data.Dataset):
                        num_samples=16000,
                        test=False):
         random.seed(0)
-        self.spect_pairs = self.make_pairs_dataset(root, n_pairs)
+        self.spect_pairs = make_pairs_dataset(root, n_pairs)
         self.root = root
         self.transform = transform
         self.loader = spect_loader
@@ -76,27 +85,27 @@ class BaseDataset(data.Dataset):
         return len(self.spect_pairs)
 
 
-class TimitDataset(BaseDataset):
-    def __init__(self, root,
-                       n_pairs=100000,
-                       transform=None,
-                       trim_start=0,
-                       num_samples=16000,
-                       test=False):
-        super(TimitDataset, self).__init__(root,
-                                           n_pairs,
-                                           transform,
-                                           trim_start,
-                                           num_samples,
-                                           test)
+# class TimitDataset(BaseDataset):
+#     def __init__(self, root,
+#                        n_pairs=100000,
+#                        transform=None,
+#                        trim_start=0,
+#                        num_samples=16000,
+#                        test=False):
+#         super(TimitDataset, self).__init__(root,
+#                                            n_pairs,
+#                                            transform,
+#                                            trim_start,
+#                                            num_samples,
+#                                            test)
 
-    def make_pairs_dataset(self, path: str, n_pairs: int) -> List[Tuple[str, str]]:
-        pairs = []
-        wav_files = list(fileutils.iter_find_files(path, "*.wav"))
+#     def make_pairs_dataset(self, path: str, n_pairs: int) -> List[Tuple[str, str]]:
+#         pairs = []
+#         wav_files = list(fileutils.iter_find_files(path, "*.wav"))
 
-        for i in range(n_pairs):
-            sampled_files = random.sample(wav_files, 2)
-            carrier_file, hidden_message_file = sampled_files
-            pairs.append((carrier_file, hidden_message_file))
-        return pairs
+#         for i in range(n_pairs):
+#             sampled_files = random.sample(wav_files, 2)
+#             carrier_file, hidden_message_file = sampled_files
+#             pairs.append((carrier_file, hidden_message_file))
+#         return pairs
 

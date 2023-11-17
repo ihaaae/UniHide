@@ -96,12 +96,6 @@ class Solver(object):
         makedirs(self.samples_dir, exist_ok=True)
         logger.info("created dirs")
 
-    # def save_models(self, encoder_first, encoder_second, decoder, suffix=''):
-    #     logger.info(f"saving model to: {self.ckpt_dir}\n==> suffix: {suffix}")
-    #     makedirs(join(self.ckpt_dir, suffix), exist_ok=True)
-    #     torch.save(encoder_first.state_dict(), join(self.ckpt_dir, suffix, "encoder_first.ckpt"))
-    #     torch.save(encoder_second.state_dict(), join(self.ckpt_dir, suffix, "encoder_second.ckpt"))
-    #     torch.save(decoder.state_dict(), join(self.ckpt_dir, suffix, f"decoder.ckpt"))
 
     def train(self, train_dataloader, val_dataloader, encoder, decoder, optimizer, scheduler):
         # start of training loop
@@ -156,7 +150,6 @@ class Solver(object):
 
             # save model every epoch
             save_models(self.ckpt_dir, encoder, decoder, suffix=str(epoch+1) + "_epoch")
-            # self.save_models_new(encoder, decoder, suffix=str(epoch+1) + "_epoch")
 
             # run validation and log losses
             self.log_losses(self.test(val_dataloader, encoder, decoder, data='val'), iteration=epoch)
