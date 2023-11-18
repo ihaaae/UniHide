@@ -114,8 +114,8 @@ class Solver(object):
             decoder.train()
 
             # inner epoch loop
-            for cur_iter, (carrier, carrier_phase, msg) in enumerate(it):
-                assert carrier.shape == carrier_phase.shape == msg.shape == spect_audio_shape
+            for cur_iter, (carrier, msg) in enumerate(it):
+                assert carrier.shape == msg.shape == spect_audio_shape
 
                 # feedforward and suffer loss
                 carrier, msg = carrier.to(device), msg.to(device)
@@ -171,7 +171,7 @@ class Solver(object):
             logger.info(f"phase: {'test' if data == 'test' else 'validation'}")
             # start of training loop
             logger.info(f"start {'testing' if data == 'test' else 'validation'}...")
-            for carrier, _, msg, _ in tqdm(test_dataloader):
+            for carrier, msg in tqdm(test_dataloader):
                 assert carrier.shape == msg.shape == spect_audio_shape
 
                 # feedforward and incur loss

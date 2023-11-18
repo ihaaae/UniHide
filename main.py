@@ -8,7 +8,7 @@ from torch.optim.lr_scheduler import StepLR
 from loguru import logger
 import lightning as L
 
-from solver_refactor import Solver
+from solver import Solver
 from dataset import TimitDataset
 from hparams import *
 from model import Encoder, CarrierDecoder, MsgDecoder

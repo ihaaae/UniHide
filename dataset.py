@@ -76,36 +76,7 @@ class TimitDataset(data.Dataset):
             carrier_phase= self.transform(carrier_phase)
             msg_spect = self.transform(msg_spect)
 
-        if self.test:
-            return carrier_spect, carrier_phase, msg_spect, msg_phase
-        else:
-            return carrier_spect, carrier_phase, msg_spect
+        return carrier_spect, msg_spect
 
     def __len__(self):
         return len(self.spect_pairs)
-
-
-# class TimitDataset(BaseDataset):
-#     def __init__(self, root,
-#                        n_pairs=100000,
-#                        transform=None,
-#                        trim_start=0,
-#                        num_samples=16000,
-#                        test=False):
-#         super(TimitDataset, self).__init__(root,
-#                                            n_pairs,
-#                                            transform,
-#                                            trim_start,
-#                                            num_samples,
-#                                            test)
-
-#     def make_pairs_dataset(self, path: str, n_pairs: int) -> List[Tuple[str, str]]:
-#         pairs = []
-#         wav_files = list(fileutils.iter_find_files(path, "*.wav"))
-
-#         for i in range(n_pairs):
-#             sampled_files = random.sample(wav_files, 2)
-#             carrier_file, hidden_message_file = sampled_files
-#             pairs.append((carrier_file, hidden_message_file))
-#         return pairs
-
