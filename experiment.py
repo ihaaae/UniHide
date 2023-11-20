@@ -5,7 +5,6 @@ from datetime import datetime
 import os
 from os.path import join
 import time
-import subprocess
 import yaml
 
 import pandas as pd

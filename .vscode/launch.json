@@ -1,0 +1,22 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Single Universal",
+            "type": "python",
+            "request": "launch",
+            "program": "main_single.py",
+            "args": ["--mode", "train", "--run_dir", "/root/single_exp",
+                     "--train_path", "/root/autodl-tmp/Timit/train",
+                     "--val_path", "/root/autodl-tmp/Timit/validation",
+                     "--test_path", "/root/autodl-tmp/Timit/test",
+                     "--message_file", "/root/autodl-tmp/Timit/train/dr1/fcjf0/sa1.wav",
+                     "--batch_size", "32", "--epochs", "5", "--dataset", "timit"],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        }
+    ]
+}
