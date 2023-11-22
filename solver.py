@@ -180,7 +180,7 @@ class Solver(object):
                 msg_reconst     = decoder(carrier_reconst)
                 _, losses_log = training_step(carrier, carrier_reconst, msg, msg_reconst, self.config.lambda_carrier_loss, self.config.lambda_msg_loss, self.config.loss_type)
                 avg_carrier_loss += losses_log['carrier_loss']
-                avg_msg_loss += losses_log['avg_msg_loss']
+                avg_msg_loss += losses_log['msg_loss']
 
                 # calculate SnR for msg
                 msg_snr = snr(msg, msg_reconst)

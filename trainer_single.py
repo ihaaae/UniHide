@@ -3,16 +3,16 @@ from os import makedirs
 from os.path import join
 from typing import Tuple
 
-from loguru import logger
+import numpy as np
 import torch
 import torch.nn.functional as F
+from loguru import logger
 from tqdm import tqdm, trange
-import numpy as np
 
-from experiment import Experiment
-from hparams import *
-from stft.stft import STFT
 from dataset_single import spect_loader
+from experiment import Experiment
+from hparams import AUDIO_LEN, HOP_LENGTH, N_FFT
+from stft.stft import STFT
 
 spect_audio_shape = (32, 1, 129, 378)
 
@@ -28,17 +28,19 @@ def snr(orig: torch.Tensor, recon: torch.Tensor) -> torch.Tensor:
     snr = 10 * torch.log10((rms1 / rms2) ** 2)
     return snr
 
-def training_step(msg_u: torch.Tensor, msg: torch.Tensor, msg_reconst: torch.Tensor, lambda_carrier, lambda_msg, loss_type) -> Tuple[torch.Tensor, defaultdict]:
-    assert msg.shape == msg_reconst.shape == spect_audio_shape
-    assert msg_u.device.type == msg.device.type == msg_reconst.device.type == 'cuda'
+def training_step(carrier, carrier_reconst: torch.Tensor, msg, msg_reconst: torch.Tensor, lambda_carrier, lambda_msg, loss_type) -> Tuple[torch.Tensor, defaultdict]:
+    assert msg.shape == msg_reconst.shape == carrier.shape == carrier_reconst.shape == spect_audio_shape
+    assert msg.device.type == msg_reconst.device.type == 'cuda'
 
     losses_log = defaultdict(int)
     loss = F.mse_loss if loss_type == 'mse' else F.l1_loss
-    carrier_loss = torch.linalg.norm(msg_u) if loss_type == 'mse' else msg_u.mean()
+    # carrier_loss = torch.linalg.norm(msg_u) if loss_type == 'mse' else msg_u.mean()
+    carrier_loss = loss(carrier_reconst, carrier)
     msg_loss = loss(msg_reconst, msg)
     losses_log['carrier_loss'] = carrier_loss.item()
     losses_log['msg_loss'] = msg_loss.item()
     loss = lambda_carrier * carrier_loss + lambda_msg * msg_loss
+    # loss = carrier_loss + (carrier_loss / msg_loss).detach() * msg_loss
 
     return loss, losses_log
 
@@ -123,7 +125,7 @@ class Trainer(object):
                 carrier_reconst = carrier + msg_u
                 msg_reconst     = decoder(carrier_reconst)
                 assert self.msg.shape == msg_u.shape == msg_reconst.shape == carrier_reconst.shape == spect_audio_shape
-                loss, losses_log = training_step(msg_u, self.msg, msg_reconst, self.config.lambda_carrier_loss, self.config.lambda_msg_loss, self.config.loss_type)
+                loss, losses_log = training_step(carrier, carrier_reconst, self.msg, msg_reconst, self.config.lambda_carrier_loss, self.config.lambda_msg_loss, self.config.loss_type)
 
                 optimizer.zero_grad()
                 loss.backward()
@@ -183,9 +185,9 @@ class Trainer(object):
                 carrier_reconst = carrier + msg_u
                 msg_reconst     = decoder(carrier_reconst)
                 assert self.msg.shape == msg_u.shape == msg_reconst.shape == carrier_reconst.shape == spect_audio_shape
-                _, losses_log = training_step(msg_u, self.msg, msg_reconst, self.config.lambda_carrier_loss, self.config.lambda_msg_loss, self.config.loss_type)
+                _, losses_log = training_step(carrier, carrier_reconst, self.msg, msg_reconst, self.config.lambda_carrier_loss, self.config.lambda_msg_loss, self.config.loss_type)
                 avg_carrier_loss += losses_log['carrier_loss']
-                avg_msg_loss += losses_log['avg_msg_loss']
+                avg_msg_loss += losses_log['msg_loss']
 
                 # calculate SnR for msg
                 msg_snr = snr(self.msg, msg_reconst)
