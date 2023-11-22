@@ -1,17 +1,17 @@
 import argparse
 from os.path import join
 
+import lightning as L
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
-from torch.optim.lr_scheduler import StepLR
 from loguru import logger
-import lightning as L
+from torch.optim.lr_scheduler import StepLR
+from torch.utils.data import DataLoader
 
+from dataset import TimitDataset, TimitSingleDataset
+from hparams import AUDIO_LEN
+from model import CarrierDecoder, Encoder, MsgDecoder
 from solver import Solver
-from dataset import TimitDataset
-from hparams import *
-from model import Encoder, CarrierDecoder, MsgDecoder
 
 torch.manual_seed(0)
 
@@ -101,6 +101,55 @@ def test_dataloader(test_path, batch_size):
     
     return test_dataloader
 
+def train_single_dataloader(train_path, message_file, batch_size, num_workers):
+    trim_start  = int(0.6*16000)
+    num_samples = AUDIO_LEN * 16000
+    train_dataset = TimitSingleDataset(train_path,
+                                 message_file,
+                                # n_pairs     = 4608,
+                                n_pairs=32,
+                                trim_start  = trim_start,
+                                num_samples = num_samples)
+    train_dataloader = DataLoader(train_dataset,
+                                  batch_size  = batch_size,
+                                  shuffle     = True,
+                                  num_workers = num_workers)
+    
+    return train_dataloader
+
+def val_single_dataloader(val_path, message_file, batch_size, num_workers):
+    trim_start  = int(0.6*16000)
+    num_samples = AUDIO_LEN * 16000
+    val_dataset = TimitSingleDataset(val_path,
+                                     message_file,
+                            #    n_pairs     = 832,
+                               n_pairs=32,
+                               trim_start  = trim_start,
+                               num_samples = num_samples)
+    val_dataloader = DataLoader(val_dataset,
+                                batch_size  = batch_size,
+                                shuffle     = False,
+                                num_workers = num_workers)
+    
+    return val_dataloader
+
+def test_single_dataloader(test_path, message_file, batch_size):
+    trim_start  = int(0.6*16000)
+    num_samples = AUDIO_LEN * 16000
+    test_dataset = TimitDataset(test_path,
+                                message_file,
+                                # n_pairs     = 832,
+                                n_pairs=32,
+                                trim_start  = trim_start,
+                                num_samples = num_samples)
+    test_dataloader = DataLoader(test_dataset,
+                                 batch_size  = batch_size,
+                                 shuffle     = False,
+                                 num_workers = 0)
+    
+    return test_dataloader
+
+
 def load_models(encoder, decoder, ckpt_dir):
     encoder.load_state_dict(torch.load(join(ckpt_dir, "encoder.ckpt")))
     decoder.load_state_dict(torch.load(join(ckpt_dir, "decoder.ckpt")))
@@ -134,14 +183,21 @@ def run(hparams):
     encoder, decoder, optimizer, scheduler = get_models(hparams)
 
     if hparams.mode == 'train':
-        train_loader = train_dataloader(hparams.train_path, hparams.batch_size, hparams.num_workers)
-        val_loader   = val_dataloader(hparams.val_path, hparams.batch_size, hparams.num_workers)
+        if hparams.single is True:
+            train_loader = train_single_dataloader(hparams.train_path, hparams.message_file, hparams.batch_size, hparams.num_workers)
+            val_loader   = val_single_dataloader(hparams.val_path, hparams.message_file, hparams.batch_size, hparams.num_workers)
+        else:
+            train_loader = train_dataloader(hparams.train_path, hparams.batch_size, hparams.num_workers)
+            val_loader   = val_dataloader(hparams.val_path, hparams.batch_size, hparams.num_workers)
 
         logger.info(f"loaded train ({len(train_loader)}), val ({len(val_loader)})")
 
         solver.train(train_loader, val_loader, encoder, decoder, optimizer, scheduler)
     elif hparams.mode == 'test':
-        test_loader = test_dataloader(hparams.test_path, hparams.batch_size)
+        if hparams.single is True:
+            test_loader = test_single_dataloader(hparams.test_path, hparams.message_file, hparams.batch_size)
+        else:
+            test_loader = test_dataloader(hparams.test_path, hparams.batch_size)
 
         logger.info(f"loaded test ({len(test_loader)})")
 
@@ -175,6 +231,9 @@ def main():
     parser.add_argument('--run_dir', type=str, default='.', help='output directory for logs, samples and checkpoints')
     parser.add_argument('--save_model_every', type=int, default=None, help='')
     parser.add_argument('--sample_every', type=int, default=None, help='')
+
+    parser.add_argument('--single', type=bool, default=False)
+    parser.add_argument('--message_file', type=str)
     hparams = parser.parse_args()
     run(hparams)
 

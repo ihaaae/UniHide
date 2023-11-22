@@ -1,14 +1,15 @@
 import random
-from typing import Tuple, Union, List
+from typing import List, Tuple, Union
 
-from boltons import fileutils
 import numpy as np
+import soundfile
 import torch
 import torch.utils.data as data
-import soundfile
+from boltons import fileutils
 
 import hparams
 from stft.stft import STFT
+
 
 def spect_loader(path:str, trim_start:int, return_phase=False, num_samples=16000, crop=True) -> Union[torch.Tensor, 
                                                                                                       Tuple[torch.Tensor, torch.Tensor]]:

@@ -2,14 +2,14 @@ import argparse
 from os.path import join
 
 import torch
-from torch.utils.data import DataLoader
-from torch.optim.lr_scheduler import StepLR
 from loguru import logger
+from torch.optim.lr_scheduler import StepLR
+from torch.utils.data import DataLoader
 
-from trainer_single import Trainer
 from dataset_single import TimitDataset
-from hparams import *
+from hparams import AUDIO_LEN
 from model_single import FullEncoder, MsgDecoder
+from trainer_single import Trainer
 
 torch.manual_seed(0)
 
@@ -128,7 +128,7 @@ def main():
     parser.add_argument('--enc_n_layers', default=3, type=int, help='number of layers in encoder')
     parser.add_argument('--dec_c_n_layers', default=4, type=int, help='number of layers in decoder')
     parser.add_argument('--lambda_carrier_loss', type=float, default=3.0, help='coefficient for carrier loss term')
-    parser.add_argument('--lambda_msg_loss', type=float, default=1.0, help='coefficient for message loss term')
+    parser.add_argument('--lambda_msg_loss', type=float, default=10.0, help='coefficient for message loss term')
 
     parser.add_argument('--num_workers', type=int, default=20, help='number of data loading workers')
     parser.add_argument('--load_ckpt', type=str, default=None, help='path to checkpoint (used for test epoch or for sampling)')

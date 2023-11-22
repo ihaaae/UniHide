@@ -1,7 +1,7 @@
-from loguru import logger
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+from loguru import logger
+
 
 class GatedBlockBN(nn.Module):
     def __init__(self, c_in, c_out, kernel_size, stride, padding, deconv=False, conv_dim=2):
@@ -71,7 +71,8 @@ class SkipGatedBlock(nn.Module):
         x1 = self.conv(x)
         x2 = torch.sigmoid(self.gate(x))
         out = x1 * x2
-        if self.skip: out += x
+        if self.skip: 
+            out += x
         return out
 
 class ReluBlock(nn.Module):
@@ -105,7 +106,8 @@ class PrintShapeLayer(nn.Module):
         self.str = str
 
     def forward(self, input):
-        if self.str: logger.debug(f"{self.str}")
+        if self.str: 
+            logger.debug(f"{self.str}")
         logger.debug(f"{input.shape}")
         return input
 

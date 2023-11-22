@@ -1,14 +1,15 @@
 import random
-from typing import Tuple, Union, List
+from typing import List, Tuple, Union
 
-from boltons import fileutils
 import numpy as np
+import soundfile
 import torch
 import torch.utils.data as data
-import soundfile
+from boltons import fileutils
 
 import hparams
 from stft.stft import STFT
+
 
 def spect_loader(path:str, trim_start:int, return_phase=False, num_samples=16000, crop=True) -> Union[torch.Tensor, 
                                                                                                       Tuple[torch.Tensor, torch.Tensor]]:
@@ -30,6 +31,16 @@ def spect_loader(path:str, trim_start:int, return_phase=False, num_samples=16000
     
     return spect
 
+def make_single_dataset(path, message_file, n_pairs):
+    pairs = []
+    wav_files = list(fileutils.iter_find_files(path, "*.wav"))
+
+    for _ in range(n_pairs):
+        sampled_file = random.sample(wav_files, 1)[0]
+        pairs.append((sampled_file, message_file))
+
+    return pairs
+
 def make_pairs_dataset(path: str, n_pairs: int) -> List[Tuple[str, str]]:
     pairs = []
     wav_files = list(fileutils.iter_find_files(path, "*.wav"))
@@ -39,6 +50,27 @@ def make_pairs_dataset(path: str, n_pairs: int) -> List[Tuple[str, str]]:
         carrier_file, hidden_message_file = sampled_files
         pairs.append((carrier_file, hidden_message_file))
     return pairs
+
+
+class TimitSingleDataset(data.Dataset):
+    def __init__(self, root, message_file, n_pairs=10000,
+                       trim_start=0, num_samples=16000):
+       random.seed(0)
+       self.spect_pairs = make_single_dataset(root, message_file, n_pairs)
+       self.loader = spect_loader
+       self.trim_start = int(trim_start)
+       self.num_samples = num_samples
+
+    def __getitem__(self, index):
+        carrier_file, msg_file = self.spect_pairs[index]
+        carrier_spect = self.loader(carrier_file, self.trim_start, num_samples=self.num_samples)
+        msg_spect     = self.loader(msg_file, self.trim_start, num_samples=self.num_samples)
+        
+        return carrier_spect, msg_spect
+
+    def __len__(self):
+        return len(self.spect_pairs)
+
 
 class TimitDataset(data.Dataset):
     def __init__(self, root,

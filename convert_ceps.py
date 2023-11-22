@@ -1,13 +1,13 @@
-from os.path import join, basename
+from os.path import basename, join
 
-from loguru import logger
-import soundfile as sf
 import numpy as np
-
-from hparams import *
-from stft.stft import STFT
-from dataset import spect_loader
+import soundfile as sf
 from griffin_lim import griffin_lim
+from loguru import logger
+
+from dataset import spect_loader
+from hparams import N_FFT, HOP_LENGTH
+from stft.stft import STFT
 
 
 def SNR(pred:np.array, label:np.array):

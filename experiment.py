@@ -1,20 +1,20 @@
 import argparse
-from argparse import Namespace
 import atexit
-from datetime import datetime
 import os
-from os.path import join
 import time
-import yaml
+from argparse import Namespace
+from datetime import datetime
+from distutils.dir_util import copy_tree
+from os.path import join
 
 import pandas as pd
-from tensorboardX import SummaryWriter
+import yaml
 from loguru import logger
-from distutils.dir_util import copy_tree
+from tensorboardX import SummaryWriter
 
 try:
-    from comet_ml import Experiment as CometExperiment
     import wandb
+    from comet_ml import Experiment as CometExperiment
     EXTERNAL_LOGGING_AVAILABLE = True
 except Exception as e:
     EXTERNAL_LOGGING_AVAILABLE = False

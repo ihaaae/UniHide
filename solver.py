@@ -3,14 +3,14 @@ from os import makedirs
 from os.path import join
 from typing import Tuple
 
-from loguru import logger
+import numpy as np
 import torch
 import torch.nn.functional as F
+from loguru import logger
 from tqdm import tqdm, trange
-import numpy as np
 
 from experiment import Experiment
-from hparams import *
+from hparams import AUDIO_LEN, HOP_LENGTH, N_FFT
 from stft.stft import STFT
 
 spect_audio_shape = (32, 1, 129, 378)
