@@ -14,7 +14,7 @@
                      "--val_path", "/root/autodl-tmp/Timit/validation",
                      "--test_path", "/root/autodl-tmp/Timit/test",
                      "--message_file", "/root/autodl-tmp/Timit/train/dr1/fcjf0/sa1.wav",
-                     "--batch_size", "32", "--epochs", "5", "--dataset", "timit"],
+                     "--batch_size", "32", "--epochs", "15", "--dataset", "timit"],
             "console": "integratedTerminal",
             "justMyCode": true
         }

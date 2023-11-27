@@ -106,8 +106,8 @@ def train_single_dataloader(train_path, message_file, batch_size, num_workers):
     num_samples = AUDIO_LEN * 16000
     train_dataset = TimitSingleDataset(train_path,
                                  message_file,
-                                # n_pairs     = 4608,
-                                n_pairs=32,
+                                n_pairs     = 4608,
+                                # n_pairs=32,
                                 trim_start  = trim_start,
                                 num_samples = num_samples)
     train_dataloader = DataLoader(train_dataset,
@@ -122,8 +122,8 @@ def val_single_dataloader(val_path, message_file, batch_size, num_workers):
     num_samples = AUDIO_LEN * 16000
     val_dataset = TimitSingleDataset(val_path,
                                      message_file,
-                            #    n_pairs     = 832,
-                               n_pairs=32,
+                               n_pairs     = 832,
+                               # n_pairs=32,
                                trim_start  = trim_start,
                                num_samples = num_samples)
     val_dataloader = DataLoader(val_dataset,
@@ -138,8 +138,8 @@ def test_single_dataloader(test_path, message_file, batch_size):
     num_samples = AUDIO_LEN * 16000
     test_dataset = TimitDataset(test_path,
                                 message_file,
-                                # n_pairs     = 832,
-                                n_pairs=32,
+                                n_pairs     = 832,
+                                # n_pairs=32,
                                 trim_start  = trim_start,
                                 num_samples = num_samples)
     test_dataloader = DataLoader(test_dataset,

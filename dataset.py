@@ -98,7 +98,7 @@ class TimitDataset(data.Dataset):
                                                    return_phase=True,
                                                    num_samples=self.num_samples)
         
-        msg_spect, msg_phase = self.loader(msg_file,
+        msg_spect, _ = self.loader(msg_file,
                                            self.trim_start,
                                            return_phase=True,
                                            num_samples=self.num_samples)
